@@ -1,0 +1,1111 @@
+import { useState, useEffect, useRef } from "react";
+
+const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap');`;
+
+const CSS = `
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #1a1a24;
+    --bg4: #22222e;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #f0f0f5;
+    --text2: #9090a8;
+    --text3: #55556a;
+    --accent: #7c6cfa;
+    --accent2: #a594ff;
+    --accent-bg: rgba(124,108,250,0.12);
+    --green: #34d399;
+    --green-bg: rgba(52,211,153,0.1);
+    --amber: #fbbf24;
+    --amber-bg: rgba(251,191,36,0.1);
+    --red: #f87171;
+    --red-bg: rgba(248,113,113,0.1);
+    --blue: #60a5fa;
+    --blue-bg: rgba(96,165,250,0.1);
+    --pink: #f472b6;
+    --pink-bg: rgba(244,114,182,0.1);
+    --radius: 10px;
+    --radius-lg: 14px;
+    --font: 'Syne', sans-serif;
+    --mono: 'DM Mono', monospace;
+    --sidebar: 220px;
+    --header: 58px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.5; overflow: hidden; height: 100vh; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  button { font-family: var(--font); cursor: pointer; border: none; background: none; color: inherit; }
+  input, textarea, select { font-family: var(--font); color: var(--text); background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; font-size: 13px; outline: none; width: 100%; }
+  input:focus, textarea:focus { border-color: var(--accent); }
+  .app { display: flex; height: 100vh; overflow: hidden; }
+  .sidebar {
+    width: var(--sidebar); background: var(--bg2); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; padding: 16px 10px;
+  }
+  .logo { padding: 4px 8px 20px; display: flex; align-items: center; gap: 8px; }
+  .logo-mark {
+    width: 28px; height: 28px; background: var(--accent); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: #fff; flex-shrink: 0;
+  }
+  .logo-text { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+  .nav-group { margin-bottom: 16px; }
+  .nav-label { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; padding: 0 8px 6px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 9px; padding: 7px 8px; border-radius: var(--radius);
+    font-size: 13px; font-weight: 500; color: var(--text2); cursor: pointer; transition: all 0.12s; margin-bottom: 1px;
+    border: 1px solid transparent;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: var(--accent-bg); color: var(--accent2); border-color: rgba(124,108,250,0.2); }
+  .nav-item .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+  .nav-item .nav-badge { margin-left: auto; background: var(--accent-bg); color: var(--accent2); font-size: 10px; padding: 1px 6px; border-radius: 20px; font-family: var(--mono); }
+  .sidebar-bottom { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border); }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .header {
+    height: var(--header); background: var(--bg); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 24px; gap: 16px; flex-shrink: 0;
+  }
+  .header-title { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+  .header-sub { font-size: 12px; color: var(--text3); margin-left: 4px; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px;
+    border-radius: var(--radius); font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1px solid var(--border); background: var(--bg3); color: var(--text2);
+    transition: all 0.12s; white-space: nowrap;
+  }
+  .btn:hover { border-color: var(--border2); color: var(--text); background: var(--bg4); }
+  .btn-primary { background: var(--accent); color: #fff; border-color: transparent; }
+  .btn-primary:hover { background: var(--accent2); color: #fff; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .content { flex: 1; overflow-y: auto; padding: 24px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 16px 18px;
+  }
+  .card-title { font-size: 12px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; }
+  .stat-val { font-size: 26px; font-weight: 800; letter-spacing: -1px; line-height: 1; margin-bottom: 4px; }
+  .stat-label { font-size: 12px; color: var(--text2); }
+  .stat-change { font-size: 11px; font-family: var(--mono); margin-top: 6px; }
+  .up { color: var(--green); }
+  .down { color: var(--red); }
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500;
+  }
+  .badge-purple { background: var(--accent-bg); color: var(--accent2); }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); }
+  .badge-red { background: var(--red-bg); color: var(--red); }
+  .badge-blue { background: var(--blue-bg); color: var(--blue); }
+  .badge-pink { background: var(--pink-bg); color: var(--pink); }
+  .tag { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; font-size: 11px; color: var(--text2); }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .row-between { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .col { display: flex; flex-direction: column; gap: 6px; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; flex-shrink: 0;
+  }
+  .progress-bar { background: var(--bg4); border-radius: 99px; height: 5px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 99px; transition: width 0.4s; }
+  .task-item {
+    display: flex; align-items: flex-start; gap: 10px; padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .task-item:last-child { border-bottom: none; }
+  .task-check {
+    width: 16px; height: 16px; border-radius: 5px; border: 1.5px solid var(--border2);
+    flex-shrink: 0; margin-top: 1px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.12s;
+  }
+  .task-check.done { background: var(--green); border-color: var(--green); }
+  .task-text { font-size: 13px; flex: 1; }
+  .task-text.done { color: var(--text3); text-decoration: line-through; }
+  .kanban { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 8px; }
+  .kanban-col { min-width: 240px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px; }
+  .kanban-col-title { font-size: 12px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+  .kanban-card {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 12px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.12s;
+  }
+  .kanban-card:hover { border-color: var(--border2); }
+  .kanban-card-title { font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+  .metric-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .metric-row:last-child { border-bottom: none; }
+  .timeline-item { display: flex; gap: 12px; padding-bottom: 16px; position: relative; }
+  .timeline-item::before { content: ''; position: absolute; left: 6px; top: 20px; bottom: 0; width: 1px; background: var(--border); }
+  .timeline-dot { width: 13px; height: 13px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg2); flex-shrink: 0; margin-top: 4px; z-index: 1; }
+  .timeline-content { flex: 1; }
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px);
+  }
+  .modal {
+    background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius-lg);
+    padding: 24px; width: 480px; max-width: 90vw; max-height: 80vh; overflow-y: auto;
+  }
+  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; color: var(--text2); margin-bottom: 5px; display: block; }
+  .search-bar {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 7px 12px; flex: 1;
+  }
+  .search-bar input { background: none; border: none; padding: 0; font-size: 13px; color: var(--text); }
+  .search-bar input::placeholder { color: var(--text3); }
+  .heatmap { display: grid; grid-template-columns: repeat(26, 1fr); gap: 3px; }
+  .heatmap-cell { aspect-ratio: 1; border-radius: 2px; }
+  .section-title { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .section-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+  .empty { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
+  .chip { background: var(--bg3); border: 1px solid var(--border); border-radius: 99px; padding: 3px 10px; font-size: 11px; color: var(--text2); cursor: pointer; transition: all 0.12s; }
+  .chip:hover, .chip.active { border-color: var(--accent); color: var(--accent2); background: var(--accent-bg); }
+  .ai-input {
+    display: flex; gap: 10px; align-items: flex-end;
+    background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-lg);
+    padding: 12px 14px;
+  }
+  .ai-input textarea { background: none; border: none; padding: 0; resize: none; font-size: 13px; line-height: 1.6; min-height: 36px; }
+  .ai-response { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; font-size: 13px; line-height: 1.7; color: var(--text); margin-top: 10px; }
+  .pulse { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.4 } }
+  .fade-in { animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: translateY(0); } }
+  .contact-card {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 14px 16px; display: flex; align-items: center; gap: 12px; transition: border-color 0.12s; cursor: pointer;
+  }
+  .contact-card:hover { border-color: var(--border2); }
+  .runway-bar { height: 8px; background: var(--bg4); border-radius: 99px; overflow: hidden; margin-top: 6px; }
+`;
+
+// ─── DATA ────────────────────────────────────────────────────────────────────
+const initData = {
+  startups: [
+    {
+      id: 1, name: "NeuroFlow", stage: "MVP", status: "active",
+      mrr: 1200, burn: 3400, runway: 8, team: 3,
+      description: "AI-powered developer productivity tool",
+      tasks: [
+        { id: 1, text: "Finish auth module", done: false, priority: "high" },
+        { id: 2, text: "User testing round 2", done: false, priority: "medium" },
+        { id: 3, text: "Set up Stripe billing", done: true, priority: "high" },
+        { id: 4, text: "Landing page copy", done: false, priority: "low" },
+      ],
+      okrs: [
+        { id: 1, title: "Reach 50 paying users", progress: 34 },
+        { id: 2, title: "Achieve $2k MRR", progress: 60 },
+        { id: 3, title: "Ship mobile app v1", progress: 20 },
+      ],
+      pipeline: [
+        { id: 1, name: "Acme Corp", stage: "Demo", value: 500, owner: "You" },
+        { id: 2, name: "DevHouse", stage: "Negotiation", value: 300, owner: "You" },
+        { id: 3, name: "Stackify", stage: "Trial", value: 800, owner: "You" },
+      ],
+      meetings: [
+        { id: 1, title: "Investor call – Seed round", date: "2025-05-08", notes: "Positive. Follow up with deck." },
+        { id: 2, title: "Customer interview – Acme", date: "2025-05-06", notes: "Pain points around CI/CD logging." },
+      ],
+      color: "#7c6cfa",
+    },
+    {
+      id: 2, name: "Casca", stage: "Pre-launch", status: "active",
+      mrr: 0, burn: 1200, runway: 18, team: 2,
+      description: "No-code backend builder for Pakistan market",
+      tasks: [
+        { id: 1, text: "Competitor analysis", done: true, priority: "high" },
+        { id: 2, text: "Design system setup", done: false, priority: "high" },
+        { id: 3, text: "Waitlist page", done: false, priority: "medium" },
+      ],
+      okrs: [
+        { id: 1, title: "500 waitlist signups", progress: 12 },
+        { id: 2, title: "Close pre-seed angel", progress: 5 },
+      ],
+      pipeline: [],
+      meetings: [
+        { id: 1, title: "Co-founder sync", date: "2025-05-07", notes: "Aligned on scope. Building MVP in 6 weeks." },
+      ],
+      color: "#f472b6",
+    },
+  ],
+  studies: {
+    courses: [
+      { id: 1, name: "Real Analysis", subject: "maths", progress: 45, grade: "A-", nextDeadline: "2025-05-15", color: "#60a5fa" },
+      { id: 2, name: "Linear Algebra", subject: "maths", progress: 70, grade: "A", nextDeadline: "2025-05-20", color: "#a78bfa" },
+      { id: 3, name: "Algorithms & DS", subject: "programming", progress: 60, grade: "B+", nextDeadline: "2025-05-12", color: "#34d399" },
+      { id: 4, name: "Systems Programming", subject: "programming", progress: 30, grade: "B", nextDeadline: "2025-05-18", color: "#fbbf24" },
+    ],
+    assignments: [
+      { id: 1, title: "RA Problem Set 7", course: "Real Analysis", due: "2025-05-15", done: false, priority: "high" },
+      { id: 2, title: "LA Eigenvalues proof", course: "Linear Algebra", due: "2025-05-20", done: false, priority: "medium" },
+      { id: 3, title: "Implement Red-Black Tree", course: "Algorithms & DS", due: "2025-05-12", done: false, priority: "high" },
+      { id: 4, title: "Memory allocator", course: "Systems Programming", due: "2025-05-18", done: true, priority: "high" },
+    ],
+    snippets: [
+      { id: 1, title: "Merge Sort", lang: "Python", code: "def merge_sort(arr):\n  if len(arr) <= 1: return arr\n  mid = len(arr)//2\n  return merge(merge_sort(arr[:mid]), merge_sort(arr[mid:]))" },
+      { id: 2, title: "Newton's Method", lang: "Python", code: "def newton(f, df, x0, tol=1e-6):\n  x = x0\n  while abs(f(x)) > tol:\n    x = x - f(x)/df(x)\n  return x" },
+    ],
+    streak: 14,
+    todayMinutes: 95,
+  },
+  work: {
+    clients: [
+      { id: 1, name: "TechBridge PK", rate: 45, currency: "USD/hr", status: "active", totalEarned: 3600, hoursLogged: 80 },
+      { id: 2, name: "Fluxion Labs", rate: 60, currency: "USD/hr", status: "active", totalEarned: 1800, hoursLogged: 30 },
+      { id: 3, name: "Orbit Media", rate: 35, currency: "USD/hr", status: "paused", totalEarned: 700, hoursLogged: 20 },
+    ],
+    invoices: [
+      { id: 1, client: "TechBridge PK", amount: 900, status: "paid", date: "2025-04-30" },
+      { id: 2, client: "Fluxion Labs", amount: 1200, status: "pending", date: "2025-05-05" },
+      { id: 3, client: "TechBridge PK", amount: 1350, status: "pending", date: "2025-05-08" },
+    ],
+    tasks: [
+      { id: 1, text: "API integration for TechBridge", client: "TechBridge PK", done: false, hours: 3 },
+      { id: 2, text: "Code review – Fluxion sprint 4", client: "Fluxion Labs", done: false, hours: 2 },
+      { id: 3, text: "Monthly report – TechBridge", client: "TechBridge PK", done: true, hours: 1 },
+    ],
+  },
+  contacts: [
+    { id: 1, name: "Ali Hassan", role: "Co-founder", company: "Casca", email: "ali@casca.io", lastContact: "2025-05-07", tags: ["co-founder", "startup"], initials: "AH", color: "#7c6cfa" },
+    { id: 2, name: "Sara Malik", role: "Angel Investor", company: "Seed Capital PK", email: "sara@seedcap.pk", lastContact: "2025-05-03", tags: ["investor"], initials: "SM", color: "#f472b6" },
+    { id: 3, name: "Bilal Ahmed", role: "Client", company: "TechBridge PK", email: "b.ahmed@techbridge.pk", lastContact: "2025-05-06", tags: ["client"], initials: "BA", color: "#34d399" },
+    { id: 4, name: "Zoya Khan", role: "Mentor", company: "LUMS", email: "zoya@lums.edu.pk", lastContact: "2025-04-28", tags: ["mentor", "academic"], initials: "ZK", color: "#fbbf24" },
+  ],
+  journal: [
+    { id: 1, date: "2025-05-09", mood: "focused", text: "Productive day. Shipped the auth module for NeuroFlow. Studied 2 hours of Real Analysis. Feeling good about the trajectory.", tags: ["productive", "shipping"] },
+    { id: 2, date: "2025-05-08", mood: "tired", text: "Long investor call. Good feedback but exhausted. Need to balance meetings with actual building.", tags: ["investor", "tired"] },
+    { id: 3, date: "2025-05-07", mood: "motivated", text: "Co-founder sync for Casca went great. Ali is aligned. 6-week MVP sprint starts Monday.", tags: ["casca", "planning"] },
+  ],
+};
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+const Icon = ({ name, size = 15, style = {} }) => (
+  <i className={`ti ti-${name}`} style={{ fontSize: size, ...style }} aria-hidden="true" />
+);
+
+const Badge = ({ color = "purple", children }) => (
+  <span className={`badge badge-${color}`}>{children}</span>
+);
+
+const Avatar = ({ initials, color, size = 30 }) => (
+  <div className="avatar" style={{ width: size, height: size, background: color + "22", color, fontSize: size * 0.37 }}>
+    {initials}
+  </div>
+);
+
+const ProgressBar = ({ value, color = "var(--accent)", height = 5 }) => (
+  <div className="progress-bar" style={{ height }}>
+    <div className="progress-fill" style={{ width: `${Math.min(value, 100)}%`, background: color }} />
+  </div>
+);
+
+const PriorityBadge = ({ p }) => {
+  const map = { high: ["red", "High"], medium: ["amber", "Med"], low: ["blue", "Low"] };
+  const [c, l] = map[p] || ["blue", p];
+  return <Badge color={c}>{l}</Badge>;
+};
+
+// ─── VIEWS ───────────────────────────────────────────────────────────────────
+
+function Dashboard({ data, setData, setView }) {
+  const [tasks, setTasks] = useState([
+    { id: 1, text: "Finish auth module – NeuroFlow", domain: "startup", done: false, priority: "high" },
+    { id: 2, text: "RA Problem Set 7", domain: "study", done: false, priority: "high" },
+    { id: 3, text: "API integration – TechBridge", domain: "work", done: false, priority: "medium" },
+    { id: 4, text: "Implement Red-Black Tree", domain: "study", done: false, priority: "high" },
+    { id: 5, text: "Casca design system", domain: "startup", done: true, priority: "medium" },
+    { id: 6, text: "Invoice – Fluxion Labs", domain: "work", done: false, priority: "low" },
+  ]);
+
+  const toggle = (id) => setTasks(t => t.map(x => x.id === id ? { ...x, done: !x.done } : x));
+  const domainColor = { startup: "var(--accent)", study: "var(--blue)", work: "var(--green)" };
+  const pending = tasks.filter(t => !t.done).length;
+  const totalMRR = data.startups.reduce((s, x) => s + x.mrr, 0);
+  const totalEarned = data.work.clients.reduce((s, x) => s + x.totalEarned, 0);
+
+  return (
+    <div className="fade-in">
+      <div className="section-title">Good morning ✦</div>
+      <div className="section-sub">Sunday, May 11 · {pending} things need your attention</div>
+
+      <div className="grid-4" style={{ marginBottom: 20 }}>
+        <div className="stat-card">
+          <div className="stat-val" style={{ color: "var(--accent)" }}>{data.startups.filter(s => s.status === "active").length}</div>
+          <div className="stat-label">Active startups</div>
+          <div className="stat-change up">↑ building</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-val" style={{ color: "var(--blue)" }}>{data.studies.streak}</div>
+          <div className="stat-label">Study streak (days)</div>
+          <div className="stat-change up">↑ {data.studies.todayMinutes}min today</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-val" style={{ color: "var(--green)" }}>${totalMRR.toLocaleString()}</div>
+          <div className="stat-label">Total MRR</div>
+          <div className="stat-change up">↑ growing</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-val" style={{ color: "var(--amber)" }}>${totalEarned.toLocaleString()}</div>
+          <div className="stat-label">Freelance earned</div>
+          <div className="stat-change">YTD</div>
+        </div>
+      </div>
+
+      <div className="grid-2" style={{ marginBottom: 20 }}>
+        <div className="card">
+          <div className="card-title"><Icon name="list-check" /> Today's priorities</div>
+          {tasks.map(t => (
+            <div className="task-item" key={t.id}>
+              <div className={`task-check ${t.done ? "done" : ""}`} onClick={() => toggle(t.id)}>
+                {t.done && <Icon name="check" size={10} style={{ color: "#fff" }} />}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div className={`task-text ${t.done ? "done" : ""}`}>{t.text}</div>
+                <div className="row" style={{ gap: 6, marginTop: 3 }}>
+                  <div className="chip" style={{ cursor: "default", borderColor: domainColor[t.domain], color: domainColor[t.domain] }}>{t.domain}</div>
+                  <PriorityBadge p={t.priority} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="col" style={{ gap: 16 }}>
+          <div className="card" style={{ flex: 1 }}>
+            <div className="card-title"><Icon name="rocket" /> Startup pulse</div>
+            {data.startups.map(s => (
+              <div key={s.id} style={{ marginBottom: 12 }}>
+                <div className="row-between" style={{ marginBottom: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: s.color }} />
+                    <span style={{ fontWeight: 600, fontSize: 13 }}>{s.name}</span>
+                    <span className="tag">{s.stage}</span>
+                  </div>
+                  <span style={{ fontSize: 12, color: "var(--text2)", fontFamily: "var(--mono)" }}>
+                    {s.runway}mo runway
+                  </span>
+                </div>
+                <ProgressBar value={s.mrr > 0 ? (s.mrr / 2000) * 100 : 5} color={s.color} />
+              </div>
+            ))}
+          </div>
+
+          <div className="card" style={{ flex: 1 }}>
+            <div className="card-title"><Icon name="calendar-event" /> Upcoming deadlines</div>
+            {[
+              { text: "Algorithms – Red-Black Tree", date: "May 12", urgency: "red" },
+              { text: "RA Problem Set 7", date: "May 15", urgency: "amber" },
+              { text: "Systems – Memory allocator", date: "May 18", urgency: "amber" },
+              { text: "LA Eigenvalues proof", date: "May 20", urgency: "blue" },
+            ].map((d, i) => (
+              <div className="metric-row" key={i}>
+                <span style={{ fontSize: 13 }}>{d.text}</span>
+                <Badge color={d.urgency}>{d.date}</Badge>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-title"><Icon name="activity" /> Recent activity</div>
+        <div style={{ display: "flex", gap: 20 }}>
+          {[
+            { label: "Commits", val: 23, color: "var(--green)" },
+            { label: "Study hours", val: 12, color: "var(--blue)" },
+            { label: "Tasks done", val: 18, color: "var(--accent)" },
+            { label: "Meetings", val: 4, color: "var(--pink)" },
+          ].map((m, i) => (
+            <div key={i} style={{ flex: 1, textAlign: "center" }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: m.color, letterSpacing: -1 }}>{m.val}</div>
+              <div style={{ fontSize: 11, color: "var(--text3)" }}>{m.label} this week</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StartupsView({ data, setData }) {
+  const [active, setActive] = useState(data.startups[0]);
+  const [tab, setTab] = useState("tasks");
+
+  const startup = data.startups.find(s => s.id === active.id) || data.startups[0];
+
+  const toggleTask = (taskId) => {
+    setData(d => ({
+      ...d,
+      startups: d.startups.map(s => s.id === startup.id
+        ? { ...s, tasks: s.tasks.map(t => t.id === taskId ? { ...t, done: !t.done } : t) }
+        : s
+      )
+    }));
+  };
+
+  const tabs = ["tasks", "okrs", "pipeline", "meetings"];
+
+  return (
+    <div className="fade-in">
+      <div className="section-title">Startups</div>
+      <div className="section-sub">Your software ventures</div>
+
+      <div className="row" style={{ marginBottom: 20, gap: 10 }}>
+        {data.startups.map(s => (
+          <button key={s.id}
+            onClick={() => setActive(s)}
+            style={{
+              display: "flex", alignItems: "center", gap: 8, padding: "8px 14px",
+              background: active.id === s.id ? s.color + "22" : "var(--bg2)",
+              border: `1px solid ${active.id === s.id ? s.color : "var(--border)"}`,
+              borderRadius: "var(--radius)", cursor: "pointer",
+              color: active.id === s.id ? s.color : "var(--text2)",
+              fontFamily: "var(--font)", fontWeight: 600, fontSize: 13, transition: "all 0.12s",
+            }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: s.color }} />
+            {s.name}
+            <span style={{ fontSize: 10, opacity: 0.7 }}>{s.stage}</span>
+          </button>
+        ))}
+        <button className="btn btn-sm"><Icon name="plus" /> New startup</button>
+      </div>
+
+      <div className="grid-4" style={{ marginBottom: 20 }}>
+        <div className="stat-card">
+          <div className="stat-val" style={{ color: "var(--green)" }}>${startup.mrr.toLocaleString()}</div>
+          <div className="stat-label">MRR</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-val" style={{ color: "var(--red)" }}>${startup.burn.toLocaleString()}</div>
+          <div className="stat-label">Burn / month</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-val" style={{ color: "var(--amber)" }}>{startup.runway}</div>
+          <div className="stat-label">Runway (months)</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-val">{startup.team}</div>
+          <div className="stat-label">Team size</div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="row-between" style={{ marginBottom: 16 }}>
+          <div className="row" style={{ gap: 8 }}>
+            {tabs.map(t => (
+              <button key={t} className={`chip ${tab === t ? "active" : ""}`} onClick={() => setTab(t)}>
+                {t.charAt(0).toUpperCase() + t.slice(1)}
+              </button>
+            ))}
+          </div>
+          <button className="btn btn-sm btn-primary"><Icon name="plus" /> Add</button>
+        </div>
+
+        {tab === "tasks" && (
+          <div>
+            {startup.tasks.map(t => (
+              <div className="task-item" key={t.id}>
+                <div className={`task-check ${t.done ? "done" : ""}`} onClick={() => toggleTask(t.id)}>
+                  {t.done && <Icon name="check" size={10} style={{ color: "#fff" }} />}
+                </div>
+                <span className={`task-text ${t.done ? "done" : ""}`} style={{ flex: 1 }}>{t.text}</span>
+                <PriorityBadge p={t.priority} />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab === "okrs" && (
+          <div>
+            {startup.okrs.map(o => (
+              <div key={o.id} style={{ marginBottom: 16 }}>
+                <div className="row-between" style={{ marginBottom: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 500 }}>{o.title}</span>
+                  <span style={{ fontSize: 12, fontFamily: "var(--mono)", color: "var(--accent2)" }}>{o.progress}%</span>
+                </div>
+                <ProgressBar value={o.progress} />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab === "pipeline" && (
+          <div>
+            {startup.pipeline.length === 0 ? (
+              <div className="empty">No deals yet. Add your first lead.</div>
+            ) : (
+              startup.pipeline.map(p => (
+                <div className="metric-row" key={p.id}>
+                  <div>
+                    <div style={{ fontWeight: 500, fontSize: 13 }}>{p.name}</div>
+                    <div style={{ fontSize: 11, color: "var(--text3)" }}>{p.stage}</div>
+                  </div>
+                  <Badge color="green">${p.value}/mo</Badge>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {tab === "meetings" && (
+          <div>
+            {startup.meetings.map((m, i) => (
+              <div className="timeline-item" key={m.id}>
+                <div className="timeline-dot" style={{ background: startup.color }} />
+                <div className="timeline-content">
+                  <div style={{ fontWeight: 500, fontSize: 13 }}>{m.title}</div>
+                  <div style={{ fontSize: 11, color: "var(--text3)", fontFamily: "var(--mono)", marginBottom: 4 }}>{m.date}</div>
+                  <div style={{ fontSize: 12, color: "var(--text2)" }}>{m.notes}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StudiesView({ data, setData }) {
+  const [tab, setTab] = useState("courses");
+  const { courses, assignments, snippets, streak, todayMinutes } = data.studies;
+
+  const toggleAssignment = (id) => {
+    setData(d => ({
+      ...d,
+      studies: {
+        ...d.studies,
+        assignments: d.studies.assignments.map(a => a.id === id ? { ...a, done: !a.done } : a)
+      }
+    }));
+  };
+
+  const heatmapData = Array.from({ length: 52 }, (_, i) =>
+    Array.from({ length: 5 }, () => Math.random())
+  ).flat();
+
+  return (
+    <div className="fade-in">
+      <div className="section-title">Studies</div>
+      <div className="section-sub">Maths & programming</div>
+
+      <div className="grid-4" style={{ marginBottom: 20 }}>
+        <div className="stat-card">
+          <div className="stat-val" style={{ color: "var(--amber)" }}>{streak} 🔥</div>
+          <div className="stat-label">Day streak</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-val" style={{ color: "var(--blue)" }}>{todayMinutes}min</div>
+          <div className="stat-label">Today's study</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-val">{assignments.filter(a => !a.done).length}</div>
+          <div className="stat-label">Pending assignments</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-val" style={{ color: "var(--green)" }}>{courses.length}</div>
+          <div className="stat-label">Active courses</div>
+        </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="card-title"><Icon name="flame" /> Activity heatmap</div>
+        <div className="heatmap">
+          {heatmapData.map((v, i) => (
+            <div key={i} className="heatmap-cell" style={{
+              background: v < 0.2 ? "var(--bg4)"
+                : v < 0.5 ? "rgba(124,108,250,0.25)"
+                : v < 0.8 ? "rgba(124,108,250,0.6)"
+                : "var(--accent)"
+            }} />
+          ))}
+        </div>
+      </div>
+
+      <div className="row" style={{ gap: 8, marginBottom: 16 }}>
+        {["courses", "assignments", "snippets"].map(t => (
+          <button key={t} className={`chip ${tab === t ? "active" : ""}`} onClick={() => setTab(t)}>
+            {t.charAt(0).toUpperCase() + t.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {tab === "courses" && (
+        <div className="grid-2">
+          {courses.map(c => (
+            <div className="card" key={c.id}>
+              <div className="row-between" style={{ marginBottom: 10 }}>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>{c.name}</div>
+                  <div style={{ fontSize: 11, color: "var(--text3)" }}>{c.subject}</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontWeight: 700, fontSize: 16, color: c.color }}>{c.grade}</div>
+                  <div style={{ fontSize: 11, color: "var(--text3)" }}>grade</div>
+                </div>
+              </div>
+              <ProgressBar value={c.progress} color={c.color} />
+              <div className="row-between" style={{ marginTop: 8 }}>
+                <span style={{ fontSize: 11, color: "var(--text3)" }}>{c.progress}% complete</span>
+                <Badge color="amber">Due {c.nextDeadline.split("-").slice(1).join("/")}</Badge>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === "assignments" && (
+        <div className="card">
+          {assignments.map(a => (
+            <div className="task-item" key={a.id}>
+              <div className={`task-check ${a.done ? "done" : ""}`} onClick={() => toggleAssignment(a.id)}>
+                {a.done && <Icon name="check" size={10} style={{ color: "#fff" }} />}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div className={`task-text ${a.done ? "done" : ""}`}>{a.title}</div>
+                <div style={{ fontSize: 11, color: "var(--text3)" }}>{a.course} · Due {a.due}</div>
+              </div>
+              <PriorityBadge p={a.priority} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === "snippets" && (
+        <div className="col" style={{ gap: 12 }}>
+          {snippets.map(s => (
+            <div className="card" key={s.id}>
+              <div className="row-between" style={{ marginBottom: 8 }}>
+                <span style={{ fontWeight: 600 }}>{s.title}</span>
+                <Badge color="blue">{s.lang}</Badge>
+              </div>
+              <pre style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--text2)", lineHeight: 1.7, overflow: "auto", background: "var(--bg3)", padding: 12, borderRadius: "var(--radius)" }}>
+                {s.code}
+              </pre>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function WorkView({ data, setData }) {
+  const { clients, invoices, tasks } = data.work;
+  const pending = invoices.filter(i => i.status === "pending").reduce((s, i) => s + i.amount, 0);
+
+  return (
+    <div className="fade-in">
+      <div className="section-title">Work</div>
+      <div className="section-sub">Freelance & contracts</div>
+
+      <div className="grid-4" style={{ marginBottom: 20 }}>
+        <div className="stat-card">
+          <div className="stat-val" style={{ color: "var(--green)" }}>{clients.filter(c => c.status === "active").length}</div>
+          <div className="stat-label">Active clients</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-val" style={{ color: "var(--amber)" }}>${pending.toLocaleString()}</div>
+          <div className="stat-label">Pending invoices</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-val">{clients.reduce((s, c) => s + c.hoursLogged, 0)}</div>
+          <div className="stat-label">Total hours logged</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-val" style={{ color: "var(--accent)" }}>${clients.reduce((s, c) => s + c.totalEarned, 0).toLocaleString()}</div>
+          <div className="stat-label">Total earned</div>
+        </div>
+      </div>
+
+      <div className="grid-2" style={{ marginBottom: 16 }}>
+        <div className="card">
+          <div className="card-title"><Icon name="users" /> Clients</div>
+          {clients.map(c => (
+            <div className="metric-row" key={c.id}>
+              <div>
+                <div style={{ fontWeight: 500, fontSize: 13 }}>{c.name}</div>
+                <div style={{ fontSize: 11, color: "var(--text3)", fontFamily: "var(--mono)" }}>{c.rate} {c.currency} · {c.hoursLogged}h logged</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <Badge color={c.status === "active" ? "green" : "amber"}>{c.status}</Badge>
+                <div style={{ fontSize: 12, color: "var(--text2)", marginTop: 2 }}>${c.totalEarned.toLocaleString()}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="card">
+          <div className="card-title"><Icon name="receipt" /> Invoices</div>
+          {invoices.map(inv => (
+            <div className="metric-row" key={inv.id}>
+              <div>
+                <div style={{ fontWeight: 500, fontSize: 13 }}>{inv.client}</div>
+                <div style={{ fontSize: 11, color: "var(--text3)", fontFamily: "var(--mono)" }}>{inv.date}</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontWeight: 700, fontSize: 14 }}>${inv.amount.toLocaleString()}</div>
+                <Badge color={inv.status === "paid" ? "green" : "amber"}>{inv.status}</Badge>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-title"><Icon name="list-check" /> Active work tasks</div>
+        {tasks.map(t => (
+          <div className="task-item" key={t.id}>
+            <div className={`task-check ${t.done ? "done" : ""}`}>
+              {t.done && <Icon name="check" size={10} style={{ color: "#fff" }} />}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div className={`task-text ${t.done ? "done" : ""}`}>{t.text}</div>
+              <div style={{ fontSize: 11, color: "var(--text3)" }}>{t.client} · {t.hours}h estimated</div>
+            </div>
+            <Badge color={t.done ? "green" : "blue"}>{t.done ? "done" : `${t.hours}h`}</Badge>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ContactsView({ data, setData }) {
+  const [search, setSearch] = useState("");
+  const filtered = data.contacts.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.company.toLowerCase().includes(search.toLowerCase()) ||
+    c.tags.some(t => t.includes(search.toLowerCase()))
+  );
+
+  return (
+    <div className="fade-in">
+      <div className="section-title">Contacts</div>
+      <div className="section-sub">Founders, investors, clients, mentors</div>
+
+      <div className="row-between" style={{ marginBottom: 20 }}>
+        <div className="search-bar" style={{ maxWidth: 320 }}>
+          <Icon name="search" style={{ color: "var(--text3)" }} />
+          <input placeholder="Search contacts…" value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <button className="btn btn-primary btn-sm"><Icon name="plus" /> Add contact</button>
+      </div>
+
+      <div className="col" style={{ gap: 10 }}>
+        {filtered.map(c => (
+          <div className="contact-card" key={c.id}>
+            <Avatar initials={c.initials} color={c.color} size={38} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: 14 }}>{c.name}</div>
+              <div style={{ fontSize: 12, color: "var(--text2)" }}>{c.role} · {c.company}</div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 11, color: "var(--text3)", marginBottom: 4 }}>Last contact: {c.lastContact}</div>
+              <div className="row" style={{ gap: 4, justifyContent: "flex-end" }}>
+                {c.tags.map(t => <span className="tag" key={t}>{t}</span>)}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function JournalView({ data, setData }) {
+  const [newEntry, setNewEntry] = useState("");
+  const [mood, setMood] = useState("focused");
+  const [showForm, setShowForm] = useState(false);
+  const moods = ["focused", "motivated", "tired", "anxious", "great", "blocked"];
+  const moodColor = { focused: "blue", motivated: "green", tired: "amber", anxious: "red", great: "purple", blocked: "red" };
+
+  const addEntry = () => {
+    if (!newEntry.trim()) return;
+    const entry = {
+      id: Date.now(), date: new Date().toISOString().split("T")[0],
+      mood, text: newEntry, tags: []
+    };
+    setData(d => ({ ...d, journal: [entry, ...d.journal] }));
+    setNewEntry(""); setShowForm(false);
+  };
+
+  return (
+    <div className="fade-in">
+      <div className="section-title">Journal</div>
+      <div className="section-sub">Private · encrypted · yours</div>
+
+      <div className="row-between" style={{ marginBottom: 20 }}>
+        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
+          <Icon name="plus" /> New entry
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="card" style={{ marginBottom: 20 }}>
+          <div className="form-group">
+            <label className="form-label">Mood</label>
+            <div className="row" style={{ flexWrap: "wrap", gap: 6 }}>
+              {moods.map(m => (
+                <button key={m} className={`chip ${mood === m ? "active" : ""}`} onClick={() => setMood(m)}>{m}</button>
+              ))}
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">What's on your mind?</label>
+            <textarea rows={4} value={newEntry} onChange={e => setNewEntry(e.target.value)} placeholder="Write freely…" style={{ resize: "vertical" }} />
+          </div>
+          <div className="row" style={{ justifyContent: "flex-end", gap: 8 }}>
+            <button className="btn" onClick={() => setShowForm(false)}>Cancel</button>
+            <button className="btn btn-primary" onClick={addEntry}>Save entry</button>
+          </div>
+        </div>
+      )}
+
+      <div className="col" style={{ gap: 14 }}>
+        {data.journal.map(e => (
+          <div className="card" key={e.id}>
+            <div className="row-between" style={{ marginBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Badge color={moodColor[e.mood] || "blue"}>{e.mood}</Badge>
+                <span style={{ fontSize: 11, color: "var(--text3)", fontFamily: "var(--mono)" }}>{e.date}</span>
+              </div>
+              {e.tags.map(t => <span className="tag" key={t}>{t}</span>)}
+            </div>
+            <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.7 }}>{e.text}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AiView({ data }) {
+  const [messages, setMessages] = useState([
+    { role: "ai", text: "Hey — I have full context on your startups, studies, and work. Ask me anything. \"What's been neglected?\" or \"What should I focus on today?\"" }
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const ref = useRef(null);
+
+  const send = async () => {
+    if (!input.trim() || loading) return;
+    const userMsg = input.trim();
+    setInput("");
+    setMessages(m => [...m, { role: "user", text: userMsg }]);
+    setLoading(true);
+
+    const context = `You are an AI assistant embedded in a personal CRM for a founder/student/freelancer.
+Their data: ${JSON.stringify({
+  startups: data.startups.map(s => ({ name: s.name, stage: s.stage, mrr: s.mrr, runway: s.runway, pendingTasks: s.tasks.filter(t => !t.done).length, okrs: s.okrs })),
+  studies: { courses: data.studies.courses, streak: data.studies.streak, pendingAssignments: data.studies.assignments.filter(a => !a.done).length },
+  work: { clients: data.work.clients.map(c => ({ name: c.name, status: c.status })), pendingInvoices: data.work.invoices.filter(i => i.status === "pending").reduce((s, i) => s + i.amount, 0) },
+})}
+Be concise, direct, and insightful. Reference their actual data. No generic advice.`;
+
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: context,
+          messages: [{ role: "user", content: userMsg }],
+        }),
+      });
+      const d = await res.json();
+      const text = d.content?.find(b => b.type === "text")?.text || "Couldn't get a response.";
+      setMessages(m => [...m, { role: "ai", text }]);
+    } catch {
+      setMessages(m => [...m, { role: "ai", text: "Connection error. Try again." }]);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { ref.current?.scrollTo(0, ref.current.scrollHeight); }, [messages]);
+
+  const suggestions = ["What's been neglected this week?", "What should I work on right now?", "Which startup needs the most attention?", "Am I on track with studies?"];
+
+  return (
+    <div className="fade-in" style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <div className="section-title">AI assistant</div>
+      <div className="section-sub">Knows your data. No generic advice.</div>
+
+      <div ref={ref} style={{ flex: 1, overflow: "auto", marginBottom: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+        {messages.map((m, i) => (
+          <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
+            {m.role === "ai" && (
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, maxWidth: "80%" }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--accent-bg)", border: "1px solid rgba(124,108,250,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+                  <Icon name="sparkles" size={13} style={{ color: "var(--accent2)" }} />
+                </div>
+                <div className="ai-response" style={{ margin: 0 }}>{m.text}</div>
+              </div>
+            )}
+            {m.role === "user" && (
+              <div style={{ background: "var(--accent)", color: "#fff", padding: "10px 14px", borderRadius: "var(--radius-lg)", fontSize: 13, maxWidth: "70%", lineHeight: 1.6 }}>
+                {m.text}
+              </div>
+            )}
+          </div>
+        ))}
+        {loading && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--accent-bg)", border: "1px solid rgba(124,108,250,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name="sparkles" size={13} style={{ color: "var(--accent2)" }} />
+            </div>
+            <div style={{ display: "flex", gap: 4 }}>
+              {[0, 1, 2].map(i => (
+                <div key={i} className="pulse" style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", animationDelay: `${i * 0.2}s` }} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          {suggestions.map(s => (
+            <button key={s} className="chip" onClick={() => setInput(s)} style={{ fontSize: 11 }}>{s}</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="ai-input">
+        <textarea
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+          placeholder="Ask anything about your startups, studies, or work…"
+          style={{ flex: 1 }}
+          rows={2}
+        />
+        <button className="btn btn-primary btn-sm" onClick={send} disabled={loading}>
+          <Icon name="arrow-up" size={13} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── APP SHELL ────────────────────────────────────────────────────────────────
+const VIEWS = [
+  { id: "dashboard", label: "Dashboard", icon: "layout-dashboard" },
+  { id: "startups", label: "Startups", icon: "rocket" },
+  { id: "studies", label: "Studies", icon: "school" },
+  { id: "work", label: "Work", icon: "briefcase" },
+  { id: "contacts", label: "Contacts", icon: "address-book" },
+  { id: "journal", label: "Journal", icon: "notebook" },
+  { id: "ai", label: "AI assistant", icon: "sparkles" },
+];
+
+export default function App() {
+  const [view, setView] = useState("dashboard");
+  const [data, setData] = useState(initData);
+
+  const renderView = () => {
+    const props = { data, setData, setView };
+    switch (view) {
+      case "dashboard": return <Dashboard {...props} />;
+      case "startups": return <StartupsView {...props} />;
+      case "studies": return <StudiesView {...props} />;
+      case "work": return <WorkView {...props} />;
+      case "contacts": return <ContactsView {...props} />;
+      case "journal": return <JournalView {...props} />;
+      case "ai": return <AiView {...props} />;
+      default: return null;
+    }
+  };
+
+  const currentView = VIEWS.find(v => v.id === view);
+  const taskCounts = {
+    startups: data.startups.reduce((s, st) => s + st.tasks.filter(t => !t.done).length, 0),
+    studies: data.studies.assignments.filter(a => !a.done).length,
+    work: data.work.tasks.filter(t => !t.done).length,
+  };
+
+  return (
+    <>
+      <style>{FONTS + CSS}</style>
+      <div className="app">
+        <nav className="sidebar">
+          <div className="logo">
+            <div className="logo-mark">C</div>
+            <span className="logo-text">Command</span>
+          </div>
+
+          <div className="nav-group">
+            {VIEWS.slice(0, 1).map(v => (
+              <div key={v.id} className={`nav-item ${view === v.id ? "active" : ""}`} onClick={() => setView(v.id)}>
+                <span className="nav-icon"><Icon name={v.icon} /></span>
+                {v.label}
+              </div>
+            ))}
+          </div>
+
+          <div className="nav-group">
+            <div className="nav-label">Workspaces</div>
+            {VIEWS.slice(1, 4).map(v => (
+              <div key={v.id} className={`nav-item ${view === v.id ? "active" : ""}`} onClick={() => setView(v.id)}>
+                <span className="nav-icon"><Icon name={v.icon} /></span>
+                {v.label}
+                {taskCounts[v.id] > 0 && <span className="nav-badge">{taskCounts[v.id]}</span>}
+              </div>
+            ))}
+          </div>
+
+          <div className="nav-group">
+            <div className="nav-label">People & notes</div>
+            {VIEWS.slice(4, 6).map(v => (
+              <div key={v.id} className={`nav-item ${view === v.id ? "active" : ""}`} onClick={() => setView(v.id)}>
+                <span className="nav-icon"><Icon name={v.icon} /></span>
+                {v.label}
+              </div>
+            ))}
+          </div>
+
+          <div className="sidebar-bottom">
+            {VIEWS.slice(6).map(v => (
+              <div key={v.id} className={`nav-item ${view === v.id ? "active" : ""}`} onClick={() => setView(v.id)}>
+                <span className="nav-icon"><Icon name={v.icon} /></span>
+                {v.label}
+                <span style={{ marginLeft: "auto", fontSize: 8, padding: "2px 6px", background: "var(--accent-bg)", color: "var(--accent2)", borderRadius: 4, fontWeight: 600 }}>AI</span>
+              </div>
+            ))}
+          </div>
+        </nav>
+
+        <div className="main">
+          <header className="header">
+            <Icon name={currentView?.icon} size={16} style={{ color: "var(--text3)" }} />
+            <span className="header-title">{currentView?.label}</span>
+            <span className="header-sub">· personal CRM</span>
+            <div className="header-right">
+              <div className="search-bar" style={{ width: 200 }}>
+                <Icon name="search" size={13} style={{ color: "var(--text3)" }} />
+                <input placeholder="Search everything…" />
+              </div>
+              <button className="btn btn-sm"><Icon name="bell" size={13} /></button>
+              <div className="avatar" style={{ width: 28, height: 28, background: "var(--accent-bg)", color: "var(--accent2)", fontSize: 11, cursor: "pointer" }}>YO</div>
+            </div>
+          </header>
+
+          <div className="content">
+            {renderView()}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
